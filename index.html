@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>WebID-Token Authentication</title>
+    <meta charset='utf-8'>
+    <style type='text/css'>
+      code {
+          font-family: monospace;
+      }
+
+      span.hilite {
+          color: red; /* font-weight: bold */
+      }
+
+      li p {
+          margin-top: 0.3em;
+          margin-bottom: 0.3em;
+      }
+
+      div.explanation {
+          background-color: #ADD8E6;
+          width: 80%;
+          margin: 12px; padding: 8px;
+      }
+
+      div.explanation li { margin-top: 8px; }
+      div.explanation dd { margin: 4px; }
+
+      .adef {
+        font-family: monospace;
+        font-weight: bold;
+          color: #ff4500 !important;
+      }
+
+      .aref {
+        font-family: monospace;
+        font-weight: bold;
+          color: #ff4500 !important;
+      }
+
+      span.entity { color: red; }
+
+      span.element { color: green; }
+    </style>   
+    <script src='http://www.w3.org/Tools/respec/respec-w3c-common'
+            async class='remove'></script>
+    <script class='remove'>
+      var respecConfig = {
+          // specification status (e.g. WD, LCWD, WG-NOTE, etc.). If in doubt use ED.
+          specStatus:           "ED",
+          
+          // the specification's short name, as in http://www.w3.org/TR/short-name/
+          shortName:            "webid-token",
+
+          // if your specification has a subtitle that goes below the main
+          // formal title, define it here
+          // subtitle   :  "an excellent document",
+
+          // if you wish the publication date to be other than the last modification, set this
+          // publishDate:  "2009-08-06",
+
+          // if the specification's copyright date is a range of years, specify
+          // the start date here:
+          // copyrightStart: "2005"
+
+          // if there is a previously published draft, uncomment this and set its YYYY-MM-DD date
+          // and its maturity status
+          // previousPublishDate:  "1977-03-15",
+          // previousMaturity:  "WD",
+
+          // if there a publicly available Editor's Draft, this is the link
+          // edDraftURI:           "http://berjon.com/",
+
+          // if this is a LCWD, uncomment and set the end of its review period
+          // lcEnd: "2009-08-05",
+
+          // editors, add as many as you like
+          // only "name" is required
+          editors:  [
+              {
+                  name:       "Andrei Sambra"
+              ,   url:        "https://deiu.rww.io/profile/card#me"
+              ,   mailto:     "andrei@fcns.eu"
+              ,   company:    "MIT"
+              ,   companyURL: "http://web.mit.edu"
+              },
+              {
+                  name:       "Alexandre Bertails"
+              ,   url:        "http://bertails.org/"
+              ,   mailto:     "alexandre@bertails.org"
+              ,   company:    "Pellucid Analytics"
+              ,   companyURL: "http://www.pellucid.com"
+              },
+          ],
+          
+          // name of the WG
+          wg:           "The Linked Data enthusiasts",
+          
+          // URI of the public WG page
+          wgURI:        "https://github.com/ld-specs",
+
+          edDraftURI:   "//ld-specs.github.io/webid-token-auth",
+          
+          // name (without the @w3c.org) of the public mailing to which comments are due
+          wgPublicList: "spec-writers-anonymous",
+          
+          // URI of the patent status for this WG, for Rec-track documents
+          // !!!! IMPORTANT !!!!
+          // This is important for Rec-track documents, do not copy a patent URI from a random
+          // document unless you know what you're doing. If in doubt ask your friendly neighbourhood
+          // Team Contact.
+          wgPatentURI:  "",
+          // !!!! IMPORTANT !!!! MAKE THE ABOVE BLINK IN YOUR HEAD
+          localBiblio: {
+            WEBID:  "Henry Story, Andrei Sambra, Stéphane Corlosquet, <a href='https://www.w3.org/2005/Incubator/webid/spec/identity/'><cite>WebID 1.0: Web Identity and Discovery.</cite></a>"
+          },
+      };
+
+      var preProc = {
+          apply:  function(c) {
+                    // extend the bibliography entries
+                    // process the document before anything else is done
+                    var refs = document.querySelectorAll('adef') ;
+                    for (var i = 0; i < refs.length; i++) {
+                        var item = refs[i];
+                        var p = item.parentNode ;
+                        var con = item.innerHTML ;
+                        var sp = document.createElement( 'dfn' ) ;
+                        var tit = item.getAttribute('title') ;
+                        if (!tit) {
+                            tit = con;
+                        }
+                        sp.className = 'adef';
+                        sp.title=tit ;
+                        sp.innerHTML = con ;
+                        p.replaceChild(sp, item) ;
+                    }
+                    refs = document.querySelectorAll('aref') ;
+                    for (var i = 0; i < refs.length; i++) {
+                        var item = refs[i];
+                        var p = item.parentNode ;
+                        var con = item.innerHTML ;
+                        var sp = document.createElement( 'a' ) ;
+                        sp.className = 'aref' ;
+                        sp.setAttribute('title', con);
+                        sp.innerHTML = '@'+con ;
+                        p.replaceChild(sp, item) ;
+                    }
+                    // local datatype references
+                    refs = document.querySelectorAll('ldtref') ;
+                    for (var i = 0; i < refs.length; i++) {
+                        var item = refs[i];
+                        if (!item) continue ;
+                        var p = item.parentNode ;
+                        var con = item.innerHTML ;
+                        var ref = item.getAttribute('title') ;
+                        if (!ref) {
+                            ref = item.textContent ;
+                        }
+                        if (ref) {
+                            ref = ref.replace(/\n/g, '_') ;
+                            ref = ref.replace(/\s+/g, '_') ;
+                        }
+                        var sp = document.createElement( 'a' ) ;
+                        sp.className = 'datatype';
+                        sp.title = ref ;
+                        sp.innerHTML = con ;
+                        p.replaceChild(sp, item) ;
+                    }
+                    // external datatype references
+                    refs = document.querySelectorAll('dtref') ;
+                    for (var i = 0; i < refs.length; i++) {
+                        var item = refs[i];
+                        if (!item) continue ;
+                        var p = item.parentNode ;
+                        var con = item.innerHTML ;
+                        var ref = item.getAttribute('title') ;
+                        if (!ref) {
+                            ref = item.textContent ;
+                        }
+                        if (ref) {
+                            ref = ref.replace(/\n/g, '_') ;
+                            ref = ref.replace(/\s+/g, '_') ;
+                        }
+                        var sp = document.createElement( 'a' ) ;
+                        sp.className = 'externalDFN';
+                        sp.title = ref ;
+                        sp.innerHTML = con ;
+                        p.replaceChild(sp, item) ;
+                    }
+                    // now do terms
+                    refs = document.querySelectorAll('tdef') ;
+                    for (var i = 0; i < refs.length; i++) {
+                        var item = refs[i];
+                        if (!item) continue ;
+                        var p = item.parentNode ;
+                        var con = item.innerHTML ;
+                        var ref = item.getAttribute('title') ;
+                        if (!ref) {
+                            ref = item.textContent ;
+                        }
+                        if (ref) {
+                            ref = ref.replace(/\n/g, '_') ;
+                            ref = ref.replace(/\s+/g, '_') ;
+                        }
+                        var sp = document.createElement( 'dfn' ) ;
+                        sp.title = ref ;
+                        sp.innerHTML = con ;
+                        p.replaceChild(sp, item) ;
+                    }
+                    // now term references
+                    refs = document.querySelectorAll('tref') ;
+                    for (var i = 0; i < refs.length; i++) {
+                        var item = refs[i];
+                        if (!item) continue ;
+                        var p = item.parentNode ;
+                        var con = item.innerHTML ;
+                        var ref = item.getAttribute('title') ;
+                        if (!ref) {
+                            ref = item.textContent ;
+                        }
+                        if (ref) {
+                            ref = ref.replace(/\n/g, '_') ;
+                            ref = ref.replace(/\s+/g, '_') ;
+                        }
+
+                        var sp = document.createElement( 'a' ) ;
+                        var id = item.textContent ;
+                        sp.className = 'tref' ;
+                        sp.title = ref ;
+                        sp.innerHTML = con ;
+                        p.replaceChild(sp, item) ;
+                    }
+                }
+        };
+        function updateExample(doc, content) {
+          // perform transformations to make it render and prettier
+          content = content.replace(/<!--/, '');
+          content = content.replace(/-->/, '');
+          content = doc._esc(content);
+          content = content.replace(/\*\*\*\*([^*]*)\*\*\*\*/g, '<span class="hilite">$1</span>') ;
+          return content ;
+        }
+
+        function updateDTD(doc, content) {
+          // perform transformations to
+          // make it render and prettier
+          content = '<pre class="dtd">' + doc._esc(content) + '</pre>';
+          content = content.replace(/!ENTITY % ([^ \t\r\n]*)/g, '!ENTITY <span class="entity">% $1</span>');
+          content = content.replace(/!ELEMENT ([^ \t$]*)/mg, '!ELEMENT <span class="element">$1</span>');
+          return content;
+        }
+
+        function updateSchema(doc, content) {
+          // perform transformations to
+          // make it render and prettier
+          content = '<pre class="dtd">' + doc._esc(content) + '</pre>';
+          content = content.replace(/&lt;xs:element\s+name=&quot;([^&]*)&quot;/g, '&lt;xs:element name="<span class="element" id="schema_element_$1">$1</span>"') ;
+          return content;
+        }
+
+        function updateTTL(doc, content) {
+          // perform transformations to
+          // make it render and prettier
+          content = '<pre class="sh_sourceCode">' + doc._esc(content) + '</pre>';
+          content = content.replace(/@prefix/g, '<span class="sh_keyword">@prefix</span>');
+          return content;
+        }
+    </script>
+</head>
+<body>
+<section id='abstract'>
+<p>
+WebID-Token is a fully decentralized authentication protocol for the Web. The purpose of this protocol is to allow agents to authenticate in a fully decentralized environment, without apriori knowledge about the authenticating user nor existing trust relationships. In other words, it allows users to access information on a server they did not previously know, and on which they do not want or have to create a new account.
+</p>
+</section>
+
+<section id='sotd'>
+<p>
+This is an internal draft document and may not even end up being officially
+published. It may also be updated, replaced or obsoleted by other documents
+at any time. It is inappropriate to cite this document as other than
+work in progress.
+The source code for this document is available at the following
+URI: <a href="https://github.com/ld-specs/webid-token-auth">https://github.com/ld-specs/webid-token-auth</a>
+</p>
+</section>
+
+<section id='introduction'>
+<h2>Introduction</h2>
+<p>
+This specification describes WebID-Token, a fully decentralized authentication protocol based on <a href='//www.w3.org/2005/Incubator/webid/spec/identity/'><cite>WebID</cite></a>. This remainder of this specification provides a detailed description of all the authentication steps, a security discussion, and finally a use-case describing the authentication flow for a user trying to log into an e-commerce site (together with a list of involved parties).
+</p>
+<p id='design-choices'>
+The authors of the document made conscious choices when designing this protocol:
+<ul>
+<li>All requests MUST be made over HTTPS.</li>
+<li>No apriori knowledge of the involved parties (A does not know B, and B does not know A).</li>
+<li>WebID-Token uses One Time Passwords (OTP) <a href="https://www.ietf.org/rfc/rfc2289.txt">RFC2289</a> as the secret credential for new Tokens.</li>
+<li>Tokens do not contain any cryptographic material.</li>
+<li>Authentication and trust decisions are made based on proof of ownership, by linking a Token to a WebID.</li>
+</ul>
+</p>
+</section>
+
+<section id='terminology'>
+<h2>Terminology</h2>
+<p>
+</p>
+<dl class="glossary">
+<dt><tdef>WebID</tdef></dt>
+<dd>A WebID is a URI with an HTTP or HTTPS scheme which denotes an Agent (Person, Organization, Group, Device, etc.). 
+For WebIDs with fragment identifiers (e.g. #me), the URI without the fragment denotes the Profile Document. 
+For WebIDs without fragment identifiers an HTTP request on the WebID MUST return a 303 with a Location header URI referring to the Profile Document. Refer to [[!WEBID]] for the normative definition.
+</dd>
+
+<dt><tdef>WebID Profile</tdef> or <tdef>Profile Document</tdef></dt>
+<dd>
+A WebID Profile is an RDF document which MUST uniquely describe the Agent denoted by the WebID in relation to that WebID. 
+This document MUST be available as Turtle [[!Turtle]].
+This document MAY be available in other RDF serialization formats, such as RDFa [[!RDFA-CORE] or RDF/XML [[!RDF-SYNTAX-GRAMMAR]] if so requested through content negotiation.
+
+Refer to [[!WEBID]] for the normative definition.
+</dd>
+
+<dt>Token</dt>
+<dd>The Token is a unique string of characters that can only be used once to verify proof of ownership for a given WebID.</dd>
+
+<dt><tdef>Token Verifier</tdef><dt>
+<dd>A Token Verifier is a service that determines whether the <tref>Subject</tref> identified by the <tref>WebID</tref> has issued a Token for a the given server. The Verifier uses the procedure determined in this protocol to do the verification.
+</dd>
+
+<dt><tdef>Alice</tdef></dt>
+<dd>Alice is an agent who owns a Server which runs a Service which Bob wishes to Access.</dd>
+
+<dt><tdef>Bob</tdef></dt>
+<dd>Bob is an agent who uses a <tref>Client</tref> to connect to <tref>Alice</tref>'s Service, and who is responsible for the private key the <tref>Client</tref> uses to authenticate to <tref>Service</tref>s.
+If he notices the private key was compromised he needs to take action to disable the public key.
+</dd>
+
+<dt><tdef>Subject</tdef></dt>
+<dd>The Subject is the Agent that is identified by the <tref>WebID</tref>.
+Only the Subject should be able to authenticate to a <tref>Service</tref>.
+We will name him <tref>Bob</tref> throughout this document to improve readability.
+The Subject is distinct from the <tref>Client</tref> which is used to connect to the <tref>Server</tref>.
+</dd>
+
+<dt><tdef>Client</tdef></dt>
+<dd>The Client - typically a Javascript-enabled app - initiates a request to a Service listening on a specific port using a given protocol on a given Server. It can request authentication credentials to send to a server.
+</dd>
+
+<dt><tdef>Server</tdef></dt>
+<dd>A Server is a machine contactable at a domain name or IP address that hosts a number of globally accessible Services.</dd>
+
+<dt><tdef>Service</tdef></dt>
+<dd>A Service is a piece of software or an agent listening for requests at a given IP address on a given Server.</dd>
+
+</dl>
+</section>
+
+<section id='scenario'>
+<h2>Scenario</h2>
+
+<p>Before describing the authentication sequence, we would like to present a typical scenario where this procol can be used. The scenario involves the following parties:</p>
+
+<ul>
+  <li>the user <tref>Bob</tref> and his <tref>Client</tref> Web application</li>
+  <li>the <tref>Server</tref> to which the user <tref>Bob</tref> attempts to authenticate</li>
+  <li>the <tref>Server</tref> hosting <tref>Bob</tref>'s <tref>WebID Profile</tref></li>
+  <li>the <tref>Token Verifier</tref> running as a <tref>Service</tref> on the <tref>Server</tref> hosting the <tref>WebID Profile</tref></li>
+</ul>
+
+</section>
+
+<section class='normative'>
+<h1>Authentication Sequence</h1>
+
+<p>In order to give the full context of a <tref>Client</tref> interaction with a <tref>Server</tref> we will illustrate the protocol with the following sequence diagram.
+</p>
+
+</section>
+
+</body>
+</html>
